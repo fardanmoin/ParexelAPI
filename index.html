@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Humanity Shift Importer</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --bg-card: #fbf9f4;
+    --ink: #1a1a1a;
+    --ink-soft: #555049;
+    --ink-faint: #9a938a;
+    --line: #d9d3c7;
+    --line-soft: #e8e3d8;
+    --accent: #c24a1e;
+    --accent-soft: #f0d6c8;
+    --ok: #2d6a4f;
+    --ok-soft: #d8e9df;
+    --err: #8b1a1a;
+    --err-soft: #f2d9d9;
+    --warn: #8b6914;
+    --warn-soft: #f5ead0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(194, 74, 30, 0.04), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(45, 106, 79, 0.03), transparent 40%);
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  header {
+    margin-bottom: 48px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .title-block .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(32px, 5vw, 48px);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+
+  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+
+  .subtitle {
+    color: var(--ink-soft);
+    margin-top: 10px;
+    font-size: 15px;
+    max-width: 560px;
+  }
+
+  .step-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+
+  .step-indicator .current { color: var(--ink); font-weight: 600; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  .card-header h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+
+  label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  input[type="text"]:focus, input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-card);
+  }
+
+  .helper {
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 8px;
+    font-style: italic;
+    font-family: 'Fraunces', serif;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 640px) {
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+  .drop-zone {
+    border: 1.5px dashed var(--line);
+    border-radius: 4px;
+    padding: 40px 24px;
+    text-align: center;
+    background: var(--bg);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: block;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--bg-card);
+  }
+
+  .drop-zone .icon {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .drop-zone .main-text {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .drop-zone .sub-text {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  .drop-zone input[type="file"] { display: none; }
+
+  .info-box {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    display: none;
+  }
+
+  .info-box.show { display: block; }
+  .info-box.ok { background: var(--ok-soft); border: 1px solid var(--ok); color: var(--ok); }
+  .info-box.err { background: var(--err-soft); border: 1px solid var(--err); color: var(--err); white-space: pre-wrap; }
+  .info-box.warn { background: var(--warn-soft); border: 1px solid var(--warn); color: var(--warn); }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  button {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 12px 22px;
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--ink);
+    color: var(--bg-card);
+  }
+
+  button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button.secondary {
+    background: transparent;
+    color: var(--ink);
+  }
+  button.secondary:hover:not(:disabled) {
+    background: var(--ink);
+    color: var(--bg-card);
+  }
+
+  .preview-section, .results-section { display: none; }
+  .preview-section.show, .results-section.show { display: block; }
+
+  .preview-meta {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+
+  .preview-meta .item { display: flex; flex-direction: column; gap: 4px; }
+  .preview-meta .label-text {
+    color: var(--ink-faint);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .preview-meta .value {
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .preview-meta .value.err { color: var(--err); }
+  .preview-meta .value.ok { color: var(--ok); }
+
+  .table-wrapper {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    background: var(--bg-card);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  thead {
+    background: var(--ink);
+    color: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 10px;
+    white-space: nowrap;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    border-right: 1px solid var(--line-soft);
+    white-space: nowrap;
+  }
+
+  tbody tr:hover { background: var(--bg); }
+  td.empty { color: var(--ink-faint); font-style: italic; }
+  .badge-overnight {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-radius: 2px;
+    margin-left: 6px;
+  }
+
+  .errors-list {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--err-soft);
+    border: 1px solid var(--err);
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--err);
+  }
+
+  .errors-list .error-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 11px;
+  }
+
+  .errors-list ul { margin-left: 16px; }
+  .errors-list li { margin-bottom: 4px; }
+
+  details {
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: var(--bg);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+  }
+  details summary {
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    user-select: none;
+  }
+  details[open] summary { margin-bottom: 16px; }
+
+  .mapping-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px 16px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .mapping-grid .from { color: var(--ink-soft); text-align: right; }
+  .mapping-grid .arrow { color: var(--accent); }
+  .mapping-grid .to { color: var(--ink); font-weight: 500; }
+
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 24px 16px 60px; }
+    .card { padding: 20px; }
+    header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="title-block">
+      <div class="eyebrow">Humanity API Integration</div>
+      <h1>Shift <em>Importer</em></h1>
+      <p class="subtitle">Upload a schedule template, review parsed rows, then push shifts directly to your Humanity account via the API.</p>
+    </div>
+    <div class="step-indicator">
+      <span class="current" id="stepNum">STEP 01</span> / 04
+    </div>
+  </header>
+
+  <!-- Step 1: Humanity Credentials -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-num">01</span>
+      <h2>Humanity API credentials</h2>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="appId">App ID</label>
+        <input type="text" id="appId" placeholder="Your Humanity App ID" autocomplete="off" />
+      </div>
+      <div>
+        <label for="appSecret">App Secret</label>
+        <input type="password" id="appSecret" placeholder="Your Humanity App Secret" autocomplete="off" />
+      </div>
+    </div>
+    <p class="helper">Create an app at <em>Settings → API v2</em> inside Humanity. Credentials stay in your browser and are sent only to authenticate each import — never stored on the server.</p>
+  </section>
+
+  <!-- Step 2: Location -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-num">02</span>
+      <h2>Location</h2>
+    </div>
+    <label for="locationInput">Location name (must match one in your Humanity account)</label>
+    <input type="text" id="locationInput" placeholder="e.g., San Francisco Research Site" autocomplete="off" />
+    <p class="helper">The source file doesn't include location, so you specify it here. It will be applied to every shift.</p>
+  </section>
+
+  <!-- Step 3: Upload -->
+  <section class="card">
+    <div class="card-header">
+      <span class="step-num">03</span>
+      <h2>Upload &amp; preview</h2>
+    </div>
+
+    <label class="drop-zone" id="dropZone" for="fileInput">
+      <div class="icon">[ + ]</div>
+      <div class="main-text">Drop CSV or Excel file here</div>
+      <div class="sub-text">or click to browse — accepts .csv, .xlsx, .xls</div>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" />
+    </label>
+
+    <div class="info-box ok" id="fileInfo"></div>
+    <div class="info-box err" id="errorMsg"></div>
+
+    <details>
+      <summary>View field mapping</summary>
+      <div class="mapping-grid">
+        <div class="from">Date</div><div class="arrow">→</div><div class="to">start_date + end_date</div>
+        <div class="from">Task Name</div><div class="arrow">→</div><div class="to">Position + title</div>
+        <div class="from">Planned Start</div><div class="arrow">→</div><div class="to">start_time</div>
+        <div class="from">Planned End</div><div class="arrow">→</div><div class="to">end_time</div>
+        <div class="from">Required Skills</div><div class="arrow">→</div><div class="to">skill_requirement</div>
+        <div class="from">Study ID</div><div class="arrow">→</div><div class="to">notes</div>
+        <div class="from">Number Of Resources</div><div class="arrow">→</div><div class="to">employees (open slots)</div>
+        <div class="from">Group</div><div class="arrow">→</div><div class="to" style="color:var(--ink-faint);">ignored</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- Step 4: Preview & Send -->
+  <section class="card preview-section" id="previewSection">
+    <div class="card-header">
+      <span class="step-num">04</span>
+      <h2>Review &amp; send to Humanity</h2>
+    </div>
+
+    <div class="preview-meta">
+      <div class="item"><span class="label-text">Valid rows</span><span class="value ok" id="rowCount">0</span></div>
+      <div class="item"><span class="label-text">Rows with issues</span><span class="value err" id="errorCount">0</span></div>
+      <div class="item"><span class="label-text">Overnight shifts</span><span class="value" id="overnightCount">0</span></div>
+      <div class="item"><span class="label-text">Location</span><span class="value" id="locationDisplay">—</span></div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="previewTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="errors-list" id="errorsList" style="display:none;">
+      <div class="error-title">Rows that will be skipped</div>
+      <ul id="errorsUl"></ul>
+    </div>
+
+    <div class="actions" style="margin-top: 24px;">
+      <button id="sendBtn">Send to Humanity</button>
+      <button class="secondary" id="resetBtn">Start over</button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="card results-section" id="resultsSection">
+    <div class="card-header">
+      <span class="step-num">DONE</span>
+      <h2>Import complete</h2>
+    </div>
+    <div class="preview-meta">
+      <div class="item"><span class="label-text">Created</span><span class="value ok" id="createdCount">0</span></div>
+      <div class="item"><span class="label-text">Failed</span><span class="value err" id="failedCount">0</span></div>
+    </div>
+    <div class="errors-list" id="resultErrors" style="display:none;">
+      <div class="error-title">Failures</div>
+      <ul id="resultErrorsUl"></ul>
+    </div>
+    <div class="actions" style="margin-top: 24px;">
+      <button class="secondary" id="startOverBtn">Start over</button>
+    </div>
+  </section>
+
+  <footer>
+    Your credentials are sent only to authenticate each import — never stored on the server.
+  </footer>
+
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const appId = $('appId'), appSecret = $('appSecret');
+const locationInput = $('locationInput');
+const fileInput = $('fileInput'), dropZone = $('dropZone');
+const fileInfo = $('fileInfo'), errorMsg = $('errorMsg');
+const previewSection = $('previewSection');
+const previewTable = $('previewTable');
+const rowCount = $('rowCount'), errorCount = $('errorCount');
+const overnightCount = $('overnightCount'), locationDisplay = $('locationDisplay');
+const errorsList = $('errorsList'), errorsUl = $('errorsUl');
+const sendBtn = $('sendBtn'), resetBtn = $('resetBtn');
+const resultsSection = $('resultsSection');
+const createdCount = $('createdCount'), failedCount = $('failedCount');
+const resultErrors = $('resultErrors'), resultErrorsUl = $('resultErrorsUl');
+const startOverBtn = $('startOverBtn');
+const stepNum = $('stepNum');
+
+let currentFile = null;
+
+function showInfo(el, msg) { el.textContent = msg; el.classList.add('show'); }
+function hideInfo(el) { el.classList.remove('show'); el.textContent = ''; }
+
+function validateStep1And2() {
+  if (!appId.value.trim() || !appSecret.value.trim()) {
+    showInfo(errorMsg, 'Please enter your Humanity App ID and App Secret first (Step 01).');
+    appId.focus();
+    return false;
+  }
+  if (!locationInput.value.trim()) {
+    showInfo(errorMsg, 'Please enter a location name (Step 02).');
+    locationInput.focus();
+    return false;
+  }
+  return true;
+}
+
+async function handleFile(file) {
+  hideInfo(errorMsg);
+  hideInfo(fileInfo);
+  previewSection.classList.remove('show');
+  resultsSection.classList.remove('show');
+
+  if (!validateStep1And2()) { fileInput.value = ''; return; }
+
+  currentFile = file;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('location', locationInput.value.trim());
+
+  showInfo(fileInfo, `Parsing ${file.name}…`);
+
+  try {
+    const r = await fetch('/api/preview', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) {
+      showInfo(errorMsg, data.detail || 'Preview failed.');
+      hideInfo(fileInfo);
+      return;
+    }
+    renderPreview(data, file.name);
+  } catch (err) {
+    showInfo(errorMsg, 'Network error: ' + err.message);
+    hideInfo(fileInfo);
+  }
+}
+
+function renderPreview(data, fileName) {
+  rowCount.textContent = data.total_valid;
+  errorCount.textContent = data.errors.length;
+  overnightCount.textContent = data.overnight_count;
+  locationDisplay.textContent = locationInput.value.trim();
+
+  const cols = [
+    { key: 'date', label: 'Start Date' },
+    { key: 'end_date', label: 'End Date' },
+    { key: 'start_time', label: 'Start' },
+    { key: 'end_time', label: 'End' },
+    { key: 'task_name', label: 'Position (Task)' },
+    { key: 'required_skills', label: 'Skill Req.' },
+    { key: 'employees_needed', label: 'Slots' },
+    { key: 'location', label: 'Location' },
+    { key: 'study_id', label: 'Notes (Study ID)' },
+  ];
+
+  const thead = previewTable.querySelector('thead');
+  const tbody = previewTable.querySelector('tbody');
+  thead.innerHTML = ''; tbody.innerHTML = '';
+
+  const headerRow = document.createElement('tr');
+  cols.forEach(c => {
+    const th = document.createElement('th');
+    th.textContent = c.label;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+
+  data.rows.forEach(r => {
+    const tr = document.createElement('tr');
+    cols.forEach(c => {
+      const td = document.createElement('td');
+      const v = r[c.key];
+      if (v === '' || v === null || v === undefined) {
+        td.textContent = '—';
+        td.classList.add('empty');
+      } else {
+        td.textContent = v;
+      }
+      if (c.key === 'end_date' && r.overnight) {
+        const b = document.createElement('span');
+        b.className = 'badge-overnight';
+        b.textContent = 'overnight';
+        td.appendChild(b);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  errorsUl.innerHTML = '';
+  if (data.errors.length) {
+    data.errors.forEach(e => {
+      const li = document.createElement('li');
+      li.textContent = `Row ${e.row_num}: ${e.message}`;
+      errorsUl.appendChild(li);
+    });
+    errorsList.style.display = 'block';
+  } else {
+    errorsList.style.display = 'none';
+  }
+
+  showInfo(fileInfo, `Parsed ${fileName}: ${data.total_valid} valid row${data.total_valid === 1 ? '' : 's'}.`);
+  previewSection.classList.add('show');
+  stepNum.textContent = 'STEP 04';
+  sendBtn.disabled = data.total_valid === 0;
+  setTimeout(() => previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+async function sendToHumanity() {
+  if (!currentFile) return;
+  if (!validateStep1And2()) return;
+
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner"></span>Sending…';
+  hideInfo(errorMsg);
+
+  const fd = new FormData();
+  fd.append('file', currentFile);
+  fd.append('location', locationInput.value.trim());
+  fd.append('app_id', appId.value.trim());
+  fd.append('app_secret', appSecret.value.trim());
+
+  try {
+    const r = await fetch('/api/send', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) {
+      showInfo(errorMsg, data.detail || 'Send failed.');
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send to Humanity';
+      return;
+    }
+    renderResults(data);
+  } catch (err) {
+    showInfo(errorMsg, 'Network error: ' + err.message);
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send to Humanity';
+  }
+}
+
+function renderResults(data) {
+  createdCount.textContent = data.created;
+  failedCount.textContent = data.failed;
+
+  resultErrorsUl.innerHTML = '';
+  if (data.errors && data.errors.length) {
+    data.errors.forEach(e => {
+      const li = document.createElement('li');
+      li.textContent = `Row ${e.row_num}: ${e.message}`;
+      resultErrorsUl.appendChild(li);
+    });
+    resultErrors.style.display = 'block';
+  } else {
+    resultErrors.style.display = 'none';
+  }
+
+  previewSection.classList.remove('show');
+  resultsSection.classList.add('show');
+  sendBtn.disabled = false;
+  sendBtn.textContent = 'Send to Humanity';
+  setTimeout(() => resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function reset() {
+  currentFile = null;
+  fileInput.value = '';
+  hideInfo(fileInfo);
+  hideInfo(errorMsg);
+  previewSection.classList.remove('show');
+  resultsSection.classList.remove('show');
+  stepNum.textContent = 'STEP 01';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Events
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+});
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    fileInput.files = e.dataTransfer.files;
+    handleFile(file);
+  }
+});
+
+sendBtn.addEventListener('click', sendToHumanity);
+resetBtn.addEventListener('click', reset);
+startOverBtn.addEventListener('click', reset);
+
+[appId, appSecret, locationInput].forEach(el => {
+  el.addEventListener('input', () => hideInfo(errorMsg));
+});
+</script>
+
+</body>
+</html>
